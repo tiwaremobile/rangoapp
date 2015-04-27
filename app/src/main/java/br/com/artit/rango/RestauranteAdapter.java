@@ -79,6 +79,7 @@ public class RestauranteAdapter extends BaseAdapter implements View.OnClickListe
     @Override
     public void onClick(View v) {}
 
+
     private class OnItemClickListener implements View.OnClickListener {
         private int mPosition;
 
@@ -88,8 +89,11 @@ public class RestauranteAdapter extends BaseAdapter implements View.OnClickListe
 
         @Override
         public void onClick(View arg0) {
-            //MainActivity sct = (MainActivity) activity;
-            //sct.xxxx(mPosition, arg0);
+            RestauranteModel restauranteModel = (RestauranteModel) arrayList.get(mPosition);
+
+            MainActivity sct = (MainActivity) activity;
+            sct.onClickRestaurante(restauranteModel);
+
         }
     }
 

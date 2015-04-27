@@ -1,7 +1,9 @@
 <resources>
     <string name="app_name">Rango</string>
-
     <string name="action_settings">Settings</string>
-
     <string name="meu_botao">Meu Botão Novo</string>
+
+    <string name="on_click_restaurante">O que você deseja fazer?</string>
+    <string name="navegar">Navegar até o Restaurante</string>
+    <string name="compartilhar">Compartilhar o Restaurante</string>
 </resources>

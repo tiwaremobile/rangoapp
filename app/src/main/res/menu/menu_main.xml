@@ -14,5 +14,11 @@
         android:orderInCategory="100"
         app:showAsAction="never" />
 
+    <item android:id="@+id/action_reload"
+        android:title="Reload"
+        android:icon="@mipmap/ic_reload_grey600_48dp"
+        android:orderInCategory="100"
+        app:showAsAction="always" />
+
 
 </menu>

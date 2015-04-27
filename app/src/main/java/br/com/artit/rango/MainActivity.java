@@ -1,18 +1,24 @@
 package br.com.artit.rango;
-
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
-
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import java.util.ArrayList;
 
 
@@ -22,6 +28,8 @@ public class MainActivity extends ActionBarActivity {
     private Context context;
     private ArrayList <RestauranteModel> arrayRestaurante;
     private ListView listRestaurantes;
+    private AlertDialog alerta;
+    private ServerApis serverApis;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,53 +37,10 @@ public class MainActivity extends ActionBarActivity {
         setContentView(R.layout.activity_main);
         context = this.getBaseContext();
 
-        carregaListaRestaurantes();
-    }
+        serverApis = new ServerApis(this);
 
-    private void xxx(int pos) {
-        final RestauranteModel restauranteModel = ( RestauranteModel )
-                arrayRestaurante.get( pos );
+        serverApis.getRestaurantes();
 
-
-    }
-
-    private void carregaListaRestaurantes() {
-        listRestaurantes = (ListView) findViewById(R.id.listRestaurantes);
-        arrayRestaurante = new ArrayList<RestauranteModel>();
-
-        RestauranteModel rest = new RestauranteModel("Villani",
-                "Rua xxxxx,100",
-                "100 metros",
-                "21",
-                "20");
-        arrayRestaurante.add(rest);
-
-
-        RestauranteModel rest1 = new RestauranteModel("Pizza Hut",
-                "Rua yyyyy,200",
-                "50 metros",
-                "21",
-                "20");
-        arrayRestaurante.add(rest1);
-
-
-        RestauranteModel rest2 = new RestauranteModel("Bar Brahma",
-                "Rua zzzz,300",
-                "550 metros",
-                "21",
-                "20");
-        arrayRestaurante.add(rest2);
-
-
-        RestauranteAdapter adapter =
-                new RestauranteAdapter(this, arrayRestaurante);
-
-        listRestaurantes.setAdapter(adapter);
-
-    }
-
-    private void exibeToast(String msg) {
-        Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -91,10 +56,54 @@ public class MainActivity extends ActionBarActivity {
         if (id == R.id.action_settings) {
             return true;
         } else if ( id == R.id.action_dialog) {
-                abrirDialog();
+             abrirDialog();
+        } else if ( id == R.id.action_reload) {
+            serverApis.getRestaurantes();
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public void onClickRestaurante(final RestauranteModel restauranteModel) {
+        ArrayList<String> itensAlert = new ArrayList<String>();
+        itensAlert.add(context.getString(R.string.navegar)); 		// value=0
+        itensAlert.add(context.getString(R.string.compartilhar)); 		// value=1
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.click_options, itensAlert);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(this.getString(R.string.on_click_restaurante)); // Titulo
+        builder.setSingleChoiceItems(adapter, 0,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface arg0, int arg1) {
+
+                        if (arg1 == 0) { //Navegar
+                            openGmaps(restauranteModel.getEndereco());
+
+                        } else if (arg1 == 1) { //Compartilhar
+                            shareTextAllApps( restauranteModel.getNome() +
+                                              " - " + restauranteModel.getEndereco()
+                                    , "Compartilhar");
+                        }
+                        alerta.dismiss();
+
+                    }
+                });
+        alerta = builder.create();
+        alerta.show();
+    }
+
+    private void shareTextAllApps(String textoCompartilhar, String tituloIntent) {
+        Intent sendIntent = new Intent(Intent.ACTION_SEND);
+        sendIntent.setType("text/plain");
+        sendIntent.putExtra(Intent.EXTRA_TEXT, textoCompartilhar);
+        startActivity(Intent.createChooser(sendIntent, tituloIntent));
+    }
+
+    private void openGmaps(String endereco) {
+        Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                Uri.parse("http://maps.google.com/maps?daddr=" + endereco));
+        startActivity(intent);
     }
 
     private void abrirDialog() {
@@ -116,11 +125,36 @@ public class MainActivity extends ActionBarActivity {
         dialog.show();
     }
 
+    public void onFinishGetRestaurantes(JSONArray dataResponse) {
+        if (dataResponse != null && dataResponse.length() > 0) {
 
+            listRestaurantes = (ListView) findViewById(R.id.listRestaurantes);
+            arrayRestaurante = new ArrayList<RestauranteModel>();
 
+            for (int i = 0; i < dataResponse.length(); i++) {
 
+                try {
+                    JSONObject json = dataResponse.getJSONObject(i);
 
+                    RestauranteModel restaurante = new RestauranteModel(
+                            json.getString("nome"),
+                            json.getString("endereco"),
+                            json.getString("distancia"),
+                            json.getString("latitude"),
+                            json.getString("longitude"));
+                    arrayRestaurante.add(restaurante);
 
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            RestauranteAdapter adapter =
+                    new RestauranteAdapter(this, arrayRestaurante);
+            listRestaurantes.setAdapter(adapter);
+
+        }
+    }
 
 
 
